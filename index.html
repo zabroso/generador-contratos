@@ -678,9 +678,7 @@ function render() {
   $('txt-antecedentes').innerHTML = `En ${pCiudad || ph('ciudad')}, a ${fechaTxt}, entre ${prestadorStr}; y por la otra parte ${clienteStr}; se ha acordado el siguiente contrato de prestación de servicios:`;
 
   // objeto
-  const cotizacionRef = prCotizacion
-    ? `El presente contrato formaliza la <strong>Cotización N° ${prCotizacion}</strong> aceptada por el CLIENTE.<br><br>`
-    : '';
+  const cotizacionRef = `El presente contrato formaliza la <strong>Cotización N° ${prCotizacion || ph('número de cotización')}</strong> aceptada por el CLIENTE.<br><br>`;
   $('txt-objeto').innerHTML = `${cotizacionRef}El PRESTADOR se obliga a prestar servicios de <strong>"Presencia Digital como Servicio"</strong> para <strong>${cEmpresa || ph('Nombre Empresa')}</strong>. El proyecto a desarrollar es: <strong>${prNombre || ph('nombre del proyecto')}</strong>.<br><br>${prDesc ? `<em>${prDesc}</em>` : ph('descripción del servicio')}`;
 
   // económico
