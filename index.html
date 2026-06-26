@@ -348,6 +348,10 @@
     <div class="section-label">Mis datos <span class="tag-prestador">pre-cargados</span></div>
 
     <div class="field">
+      <label>Nombre del negocio / marca</label>
+      <input type="text" id="p-marca" value="Servicios Digitales Profesionales" />
+    </div>
+    <div class="field">
       <label>Nombre completo</label>
       <input type="text" id="p-nombre" value="Pablo Joel Marambio Cuzmar" />
     </div>
@@ -469,7 +473,7 @@
   <div id="contract">
 
     <div class="doc-header">
-      <div class="doc-logo">Servicios Digitales Profesionales</div>
+      <div class="doc-logo" id="doc-logo">Servicios Digitales Profesionales</div>
       <div class="doc-title">Contrato de Prestación<br>de Servicios Digitales</div>
       <div class="doc-subtitle" id="doc-subtitulo">— Complete los campos para generar el contrato —</div>
     </div>
@@ -587,7 +591,7 @@
     </div>
 
     <div class="doc-footer" id="doc-footer">
-      Contrato generado el <span id="footer-fecha"></span> · <span id="footer-prestador"></span> · pjmarambioc@gmail.com
+      Contrato generado el <span id="footer-fecha"></span> · <span id="footer-prestador"></span> · <span id="footer-correo">pjmarambioc@gmail.com</span>
     </div>
 
   </div><!-- /contract -->
@@ -608,6 +612,7 @@ function fmt(n) {
 function render() {
   const dia      = val('f-dia');
   const mes      = val('f-mes');
+  const pMarca   = val('p-marca');
   const pNombre  = val('p-nombre');
   const pRut     = val('p-rut');
   const pCiudad  = val('p-ciudad');
@@ -633,6 +638,9 @@ function render() {
 
   const jCiudad  = val('j-ciudad');
   const jFirma   = val('j-firma');
+
+  // cabecera y pie
+  $('doc-logo').textContent = pMarca || 'Servicios Digitales Profesionales';
 
   // subtitulo
   const fechaTxt = (dia && mes) ? `${dia} de ${mes} de 2026` : ph('fecha');
@@ -682,6 +690,7 @@ function render() {
   const today = new Date();
   $('footer-fecha').textContent = today.toLocaleDateString('es-CL', { day:'numeric', month:'long', year:'numeric' });
   $('footer-prestador').textContent = pNombre;
+  $('footer-correo').textContent = pCorreo;
 }
 
 // ── número a letras (simplificado, sólo hasta millones) ──
