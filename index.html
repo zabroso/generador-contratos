@@ -213,6 +213,7 @@
     font-size: 13px;
     line-height: 1.85;
     color: #1a1a1a;
+    position: relative;
   }
 
   .doc-header {
@@ -329,6 +330,37 @@
 
   /* placeholder style */
   .ph { color: #c0392b; font-style: italic; }
+
+  /* ── SALTOS DE PÁGINA ── */
+  #breaks-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+  }
+
+  .break-line {
+    position: absolute;
+    left: -72px;
+    right: -72px;
+    height: 0;
+    border-top: 1.5px dashed #b8b8cc;
+  }
+
+  .break-line::after {
+    content: 'salto de página';
+    position: absolute;
+    right: 76px;
+    top: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 8px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #b8b8cc;
+  }
 
   @media print {
     body { display: block; }
@@ -626,6 +658,7 @@
       Contrato generado el <span id="footer-fecha"></span> · <span id="footer-prestador"></span> · <span id="footer-correo">pjmarambioc@gmail.com</span>
     </div>
 
+    <div id="breaks-overlay"></div>
   </div><!-- /contract -->
 </main>
 
@@ -725,6 +758,8 @@ function render() {
   $('footer-fecha').textContent = today.toLocaleDateString('es-CL', { day:'numeric', month:'long', year:'numeric' });
   $('footer-prestador').textContent = pNombre;
   $('footer-correo').textContent = pCorreo;
+
+  updatePageBreaks();
 }
 
 // ── número a letras (simplificado, sólo hasta millones) ──
@@ -773,6 +808,24 @@ function resetForm() {
   render();
 }
 
+// ── saltos de página ─────────────────────────────────────
+function updatePageBreaks() {
+  const contractEl = $('contract');
+  const overlay    = $('breaks-overlay');
+  overlay.innerHTML = '';
+
+  const w     = contractEl.offsetWidth;
+  const pageH = Math.round(269 * w / 182); // A4: (297-28)mm / (210-28)mm * ancho en px
+  const totalH = contractEl.scrollHeight;
+
+  for (let y = pageH; y < totalH; y += pageH) {
+    const line = document.createElement('div');
+    line.className = 'break-line';
+    line.style.top = y + 'px';
+    overlay.appendChild(line);
+  }
+}
+
 // ── exportar PDF ──────────────────────────────────────────
 function exportPDF() {
   const empresa = val('c-empresa') || 'cliente';
@@ -781,8 +834,10 @@ function exportPDF() {
     : new Date().toLocaleDateString('es-CL').replace(/\//g,'-');
 
   const filename = `Contrato_${empresa.replace(/\s+/g,'_')}_${fecha}.pdf`;
-  const el = $('contract');
+  const el      = $('contract');
+  const overlay = $('breaks-overlay');
 
+  overlay.style.display = 'none';
   html2pdf().set({
     margin: [14, 14, 14, 14],
     filename,
@@ -790,7 +845,7 @@ function exportPDF() {
     html2canvas: { scale: 2, useCORS: true },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-  }).from(el).save();
+  }).from(el).save().then(() => { overlay.style.display = ''; });
 }
 
 // ── día actual ───────────────────────────────────────────
@@ -818,6 +873,7 @@ document.querySelectorAll('input:not(#f-hoy), textarea, select').forEach(el => {
 });
 
 $('f-hoy').addEventListener('change', applyHoy);
+window.addEventListener('resize', updatePageBreaks);
 
 // ── init ──────────────────────────────────────────────────
 applyHoy();
