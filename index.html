@@ -433,6 +433,10 @@
     <div class="section-label">Proyecto</div>
 
     <div class="field">
+      <label>Número de cotización</label>
+      <input type="text" id="pr-cotizacion" placeholder="ej. COT-2026-001" />
+    </div>
+    <div class="field">
       <label>Nombre del proyecto</label>
       <input type="text" id="pr-nombre" placeholder="ej. Sitio web corporativo Fenixa" />
     </div>
@@ -648,6 +652,7 @@ function render() {
   const cEmpresa = val('c-empresa');
   const cDir     = val('c-dir');
 
+  const prCotizacion = val('pr-cotizacion');
   const prNombre = val('pr-nombre');
   const prDesc   = val('pr-desc');
 
@@ -673,7 +678,10 @@ function render() {
   $('txt-antecedentes').innerHTML = `En ${pCiudad || ph('ciudad')}, a ${fechaTxt}, entre ${prestadorStr}; y por la otra parte ${clienteStr}; se ha acordado el siguiente contrato de prestación de servicios:`;
 
   // objeto
-  $('txt-objeto').innerHTML = `El PRESTADOR se obliga a prestar servicios de <strong>"Presencia Digital como Servicio"</strong> para <strong>${cEmpresa || ph('Nombre Empresa')}</strong>. El proyecto a desarrollar es: <strong>${prNombre || ph('nombre del proyecto')}</strong>.<br><br>${prDesc ? `<em>${prDesc}</em>` : ph('descripción del servicio')}`;
+  const cotizacionRef = prCotizacion
+    ? `El presente contrato formaliza la <strong>Cotización N° ${prCotizacion}</strong> aceptada por el CLIENTE.<br><br>`
+    : '';
+  $('txt-objeto').innerHTML = `${cotizacionRef}El PRESTADOR se obliga a prestar servicios de <strong>"Presencia Digital como Servicio"</strong> para <strong>${cEmpresa || ph('Nombre Empresa')}</strong>. El proyecto a desarrollar es: <strong>${prNombre || ph('nombre del proyecto')}</strong>.<br><br>${prDesc ? `<em>${prDesc}</em>` : ph('descripción del servicio')}`;
 
   // económico
   const precioFmt = precio ? `<strong>$${fmt(precio)} (${numALetras(Number(precio))} pesos)</strong>` : ph('precio total');
