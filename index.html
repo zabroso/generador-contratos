@@ -97,6 +97,23 @@
     margin-bottom: 4px;
   }
 
+  .check-label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    cursor: pointer;
+    margin-bottom: 10px;
+  }
+  .check-label input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+  }
+
   input, textarea, select {
     width: 100%;
     padding: 8px 10px;
@@ -327,6 +344,10 @@
 
     <!-- FECHA -->
     <div class="section-label">Fecha del contrato</div>
+    <label class="check-label">
+      <input type="checkbox" id="f-hoy" checked />
+      Día actual
+    </label>
     <div class="field-row">
       <div class="field">
         <label>Día</label>
@@ -759,14 +780,34 @@ function exportPDF() {
   }).from(el).save();
 }
 
+// ── día actual ───────────────────────────────────────────
+const MESES = ['enero','febrero','marzo','abril','mayo','junio',
+               'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function applyHoy() {
+  const checked = $('f-hoy').checked;
+  const diaEl = $('f-dia');
+  const mesEl = $('f-mes');
+  if (checked) {
+    const hoy = new Date();
+    diaEl.value = hoy.getDate();
+    mesEl.value = MESES[hoy.getMonth()];
+  }
+  diaEl.disabled = checked;
+  mesEl.disabled = checked;
+  render();
+}
+
 // ── listeners ─────────────────────────────────────────────
-document.querySelectorAll('input, textarea, select').forEach(el => {
+document.querySelectorAll('input:not(#f-hoy), textarea, select').forEach(el => {
   el.addEventListener('input', render);
   el.addEventListener('change', render);
 });
 
-// render inicial
-render();
+$('f-hoy').addEventListener('change', applyHoy);
+
+// ── init ──────────────────────────────────────────────────
+applyHoy();
 </script>
 </body>
 </html>
