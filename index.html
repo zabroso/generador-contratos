@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Generador de Contrato — Pablo Marambio</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1a2e;
+    --ink-soft: #4a4a6a;
+    --ink-muted: #8888aa;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --surface: #f8f8fc;
+    --border: #e2e2ee;
+    --white: #ffffff;
+    --success: #16a34a;
+    --panel-w: 380px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--surface);
+    color: var(--ink);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── PANEL IZQUIERDO ── */
+  #panel {
+    width: var(--panel-w);
+    min-width: var(--panel-w);
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #panel-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--ink);
+    color: var(--white);
+  }
+
+  #panel-header h1 {
+    font-family: 'Lora', serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+
+  #panel-header p {
+    font-size: 11px;
+    color: rgba(255,255,255,0.55);
+    margin-top: 3px;
+  }
+
+  #panel-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+  }
+
+  #panel-scroll::-webkit-scrollbar { width: 4px; }
+  #panel-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .section-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin: 20px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label:first-child { margin-top: 0; }
+
+  .field {
+    margin-bottom: 12px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    padding: 8px 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+    background: var(--white);
+  }
+
+  textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .tag-prestador {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    background: var(--accent-light);
+    color: var(--accent);
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  #panel-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--white);
+  }
+
+  .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--ink-soft);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover { background: var(--border); }
+
+  /* ── PREVIEW ── */
+  #preview-wrap {
+    flex: 1;
+    overflow-y: auto;
+    padding: 32px;
+    background: #e8e8f0;
+  }
+
+  #preview-wrap::-webkit-scrollbar { width: 6px; }
+  #preview-wrap::-webkit-scrollbar-thumb { background: #c0c0d0; border-radius: 3px; }
+
+  /* ── DOCUMENTO ── */
+  #contract {
+    max-width: 760px;
+    margin: 0 auto;
+    background: var(--white);
+    box-shadow: 0 4px 32px rgba(26,26,46,0.12);
+    padding: 64px 72px;
+    font-family: 'Lora', serif;
+    font-size: 13px;
+    line-height: 1.85;
+    color: #1a1a1a;
+  }
+
+  .doc-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .doc-logo {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 16px;
+  }
+
+  .doc-title {
+    font-family: 'Lora', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+
+  .doc-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: var(--ink-muted);
+    letter-spacing: 0.04em;
+  }
+
+  .clause {
+    margin-bottom: 28px;
+  }
+
+  .clause-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+
+  .clause p {
+    margin-bottom: 10px;
+    text-align: justify;
+  }
+
+  .clause ul {
+    margin: 8px 0 10px 20px;
+  }
+
+  .clause li {
+    margin-bottom: 6px;
+  }
+
+  .highlight {
+    background: var(--accent-light);
+    padding: 12px 16px;
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    margin: 12px 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+  }
+
+  .signatures {
+    margin-top: 56px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+  }
+
+  .sig-block {
+    text-align: center;
+  }
+
+  .sig-line {
+    border-top: 1px solid var(--ink);
+    margin-bottom: 8px;
+    padding-top: 12px;
+  }
+
+  .sig-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .sig-role {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+  }
+
+  .doc-footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-family: 'Inter', sans-serif;
+    font-size: 9px;
+    color: var(--ink-muted);
+    text-align: center;
+    letter-spacing: 0.04em;
+  }
+
+  /* placeholder style */
+  .ph { color: #c0392b; font-style: italic; }
+
+  @media print {
+    body { display: block; }
+    #panel { display: none; }
+    #preview-wrap { padding: 0; background: white; }
+    #contract { box-shadow: none; max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ PANEL ══════════════ -->
+<aside id="panel">
+  <div id="panel-header">
+    <h1>Generador de Contrato</h1>
+    <p>Completa los campos — el contrato se actualiza en tiempo real</p>
+  </div>
+
+  <div id="panel-scroll">
+
+    <!-- FECHA -->
+    <div class="section-label">Fecha del contrato</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Día</label>
+        <input type="number" id="f-dia" min="1" max="31" placeholder="26" />
+      </div>
+      <div class="field">
+        <label>Mes</label>
+        <select id="f-mes">
+          <option value="">— mes —</option>
+          <option>enero</option><option>febrero</option><option>marzo</option>
+          <option>abril</option><option>mayo</option><option>junio</option>
+          <option>julio</option><option>agosto</option><option>septiembre</option>
+          <option>octubre</option><option>noviembre</option><option>diciembre</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- PRESTADOR -->
+    <div class="section-label">Mis datos <span class="tag-prestador">pre-cargados</span></div>
+
+    <div class="field">
+      <label>Nombre completo</label>
+      <input type="text" id="p-nombre" value="Pablo Joel Marambio Cuzmar" />
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>RUT</label>
+        <input type="text" id="p-rut" value="20.722.379-4" />
+      </div>
+      <div class="field">
+        <label>Ciudad</label>
+        <input type="text" id="p-ciudad" value="Valparaíso" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Dirección</label>
+      <input type="text" id="p-dir" value="San Román 140" />
+    </div>
+    <div class="field">
+      <label>Correo electrónico</label>
+      <input type="email" id="p-correo" value="pjmarambioc@gmail.com" />
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Banco</label>
+        <input type="text" id="p-banco" value="Santander" />
+      </div>
+      <div class="field">
+        <label>Tipo de cuenta</label>
+        <input type="text" id="p-tipo-cuenta" value="Cuenta Corriente" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Número de cuenta</label>
+      <input type="text" id="p-num-cuenta" value="000083722878" />
+    </div>
+
+    <!-- CLIENTE -->
+    <div class="section-label">Datos del cliente</div>
+
+    <div class="field">
+      <label>Nombre completo del representante</label>
+      <input type="text" id="c-nombre" placeholder="ej. Oscar Ascencio" />
+    </div>
+    <div class="field">
+      <label>RUT del representante</label>
+      <input type="text" id="c-rut" placeholder="ej. 12.345.678-9" />
+    </div>
+    <div class="field">
+      <label>Nombre de la empresa</label>
+      <input type="text" id="c-empresa" placeholder="ej. Fenixa SpA" />
+    </div>
+    <div class="field">
+      <label>Dirección del cliente</label>
+      <input type="text" id="c-dir" placeholder="ej. Av. Principal 456, Santiago" />
+    </div>
+
+    <!-- PROYECTO -->
+    <div class="section-label">Proyecto</div>
+
+    <div class="field">
+      <label>Nombre del proyecto</label>
+      <input type="text" id="pr-nombre" placeholder="ej. Sitio web corporativo Fenixa" />
+    </div>
+    <div class="field">
+      <label>Descripción del servicio</label>
+      <textarea id="pr-desc" placeholder="ej. Diseño, estructuración, codificación e instalación de sitio web con 5 secciones: Inicio, Servicios, Nosotros, Blog y Contacto."></textarea>
+    </div>
+
+    <!-- CONDICIONES ECONOMICAS -->
+    <div class="section-label">Condiciones económicas</div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Precio total ($)</label>
+        <input type="number" id="e-precio" placeholder="500000" />
+      </div>
+      <div class="field">
+        <label>N° de cuotas / meses</label>
+        <input type="number" id="e-cuotas" placeholder="12" min="1" />
+      </div>
+    </div>
+
+    <!-- SOPORTE Y PLAZOS -->
+    <div class="section-label">Soporte y plazos</div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Horas de soporte mensual</label>
+        <input type="number" id="s-horas" placeholder="4" min="1" />
+      </div>
+      <div class="field">
+        <label>Garantía (meses)</label>
+        <input type="number" id="s-garantia" placeholder="3" min="1" />
+      </div>
+    </div>
+
+    <!-- FIRMA -->
+    <div class="section-label">Firma y jurisdicción</div>
+
+    <div class="field">
+      <label>Ciudad de jurisdicción</label>
+      <input type="text" id="j-ciudad" value="Valparaíso" />
+    </div>
+    <div class="field">
+      <label>Plataforma de firma electrónica</label>
+      <input type="text" id="j-firma" placeholder="ej. FirmaVirtual / E-certchile" />
+    </div>
+
+  </div><!-- /panel-scroll -->
+
+  <div id="panel-footer">
+    <button class="btn btn-secondary" onclick="resetForm()">↺ Limpiar cliente</button>
+    <button class="btn btn-primary" onclick="exportPDF()">⬇ Exportar PDF</button>
+  </div>
+</aside>
+
+<!-- ══════════════ PREVIEW ══════════════ -->
+<main id="preview-wrap">
+  <div id="contract">
+
+    <div class="doc-header">
+      <div class="doc-logo">Servicios Digitales Profesionales</div>
+      <div class="doc-title">Contrato de Prestación<br>de Servicios Digitales</div>
+      <div class="doc-subtitle" id="doc-subtitulo">— Complete los campos para generar el contrato —</div>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Antecedentes</div>
+      <p id="txt-antecedentes"></p>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Primera — Objeto del Contrato</div>
+      <p id="txt-objeto"></p>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Segunda — Metodología y Plazos (El Escudo de Tiempo)</div>
+      <p>El desarrollo se realizará de forma <strong>iterativa e incremental</strong>.</p>
+      <p><strong>Cómputo de Plazos:</strong> Todos los plazos de entrega se medirán exclusivamente en días hábiles, entendiéndose por tales de lunes a viernes, excluyendo sábados, domingos y festivos en Chile.</p>
+      <p><strong>Cronograma estimado</strong> (contado desde la firma y recepción de insumos):</p>
+      <ul>
+        <li><strong>Semana 1–2:</strong> Diseño y estructura visual (wireframes)</li>
+        <li><strong>Semana 3–4:</strong> Desarrollo y codificación</li>
+        <li><strong>Semana 5:</strong> Revisión y ajustes</li>
+        <li><strong>Semana 6:</strong> Entrega final e instalación en servidor</li>
+      </ul>
+      <p><strong>Cláusula de Suspensión (Stop-the-Clock):</strong> El cumplimiento de los plazos depende de la entrega oportuna de insumos por parte del CLIENTE (logos, accesos, IPs). Si el CLIENTE demora más de 2 días hábiles en responder o entregar información, el cronograma se congelará automáticamente, extendiéndose la fecha de entrega final en el mismo número de días que dure el retraso.</p>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Tercera — Condiciones Económicas y Facturación</div>
+      <p id="txt-economico"></p>
+      <div class="highlight" id="txt-pago-highlight"></div>
+      <p id="txt-banco"></p>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Cuarta — Entregables y Valor Agregado</div>
+      <p>Al finalizar el ciclo de desarrollo inicial, el PRESTADOR entregará:</p>
+      <ul>
+        <li>Sitio web instalado y funcionando al 100% en el servidor del CLIENTE.</li>
+        <li><strong>Manual de Usuario:</strong> Documento digital con capturas de pantalla para la autogestión de contenidos básicos.</li>
+        <li><strong>Capacitación:</strong> Una sesión técnica de 3 horas para el equipo del CLIENTE.</li>
+        <li>Secciones de Términos y Condiciones y Políticas de Privacidad para cumplimiento normativo.</li>
+      </ul>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Quinta — Propiedad Intelectual y Activos (El Escudo de Pago)</div>
+      <p><strong>Titularidad:</strong> El CLIENTE será el titular de la propiedad intelectual una vez liquidado el pago total o mientras se encuentre al día con sus cuotas mensuales.</p>
+      <p><strong>Garantía de Activos:</strong> El PRESTADOR garantiza que todas las imágenes y recursos visuales utilizados son libres de derechos (provenientes de bibliotecas como Pexels) o cubiertos por él mismo.</p>
+      <p><strong>Retención:</strong> El PRESTADOR se reserva la entrega de archivos fuente y claves de administración finales hasta que el CLIENTE haya pagado la cuota correspondiente al hito de lanzamiento.</p>
+      <p><strong>Mora en pagos:</strong> En caso de mora en el pago de dos o más cuotas consecutivas, el PRESTADOR quedará facultado para suspender el acceso al sitio web hasta regularizar la deuda, sin que ello constituya incumplimiento contractual de su parte. La suspensión se notificará con 3 días hábiles de anticipación por correo electrónico.</p>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Sexta — Gestión de Cambios (El Escudo de Alcance)</div>
+      <p id="txt-soporte"></p>
+      <p>Se entiende por cambio menor toda modificación que no altere la estructura, navegación o funcionalidad del sitio, tales como actualización de textos, imágenes o datos de contacto. Las horas no utilizadas en un mes <strong>no son acumulables</strong> al siguiente período.</p>
+      <p>Cualquier cambio, mejora o funcionalidad extra no detallada en la Cláusula Primera se considerará un requerimiento adicional. Todo requerimiento adicional deberá ser solicitado por escrito (correo electrónico o plataforma acordada). El PRESTADOR tendrá un plazo de 3 días hábiles para responder con una cotización. El trabajo adicional solo comenzará una vez aprobado el presupuesto por escrito por el CLIENTE.</p>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Séptima — Garantía y Responsabilidad</div>
+      <p id="txt-garantia"></p>
+      <p>Para hacer efectiva la garantía, el CLIENTE deberá reportar la falla por correo electrónico con descripción y capturas de pantalla. El PRESTADOR tendrá 5 días hábiles para diagnosticar y 10 días hábiles para resolver.</p>
+      <p>Esta garantía no cubre fallas causadas por terceros, problemas de servidor ajenos, modificaciones realizadas al código por personal no autorizado, ni vencimiento de dominios o certificados SSL no gestionados por el PRESTADOR.</p>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Octava — Fuerza Mayor</div>
+      <p>Ninguna de las partes será responsable por el incumplimiento de sus obligaciones cuando este se deba a causas de fuerza mayor o caso fortuito, tales como desastres naturales, fallas masivas de infraestructura digital, enfermedad grave debidamente acreditada o disposiciones de autoridad. La parte afectada deberá notificar a la otra dentro de 48 horas de ocurrido el evento. Los plazos se suspenderán por el tiempo que dure la causa.</p>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Novena — Término Anticipado</div>
+      <p>Cualquiera de las partes podrá poner término anticipado al contrato mediante aviso escrito con 15 días hábiles de anticipación. En caso de término por decisión del CLIENTE, este deberá pagar las cuotas correspondientes al trabajo efectivamente realizado hasta la fecha de término, según informe de avance emitido por el PRESTADOR. En caso de término por incumplimiento grave del PRESTADOR, el CLIENTE tendrá derecho a la devolución proporcional de los montos ya pagados.</p>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Décima — Hosting y Dominio</div>
+      <p>El CLIENTE será responsable de contratar y mantener el servicio de hosting y dominio necesarios para el funcionamiento del sitio web. El PRESTADOR asesorará en la elección del proveedor, pero no asumirá costos ni responsabilidades asociadas a dichos servicios. Las credenciales de acceso al servidor deberán ser entregadas al PRESTADOR dentro de los 3 días hábiles siguientes a la firma de este contrato.</p>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Undécima — Confidencialidad y Legislación</div>
+      <p>Ambas partes se obligan a mantener estricta reserva de la información sensible conocida durante el proyecto. El contrato se rige por las leyes chilenas, especialmente la Ley 19.628 (Protección de la Vida Privada) y la Ley 17.336 (Propiedad Intelectual).</p>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Duodécima — Domicilio y Jurisdicción</div>
+      <p id="txt-jurisdiccion"></p>
+    </div>
+
+    <div class="clause">
+      <div class="clause-title">Decimotercera — Firma Electrónica</div>
+      <p id="txt-firma"></p>
+    </div>
+
+    <!-- FIRMAS -->
+    <div class="signatures">
+      <div class="sig-block">
+        <div style="height:48px"></div>
+        <div class="sig-line"></div>
+        <div class="sig-name" id="sig-prestador">Pablo Joel Marambio Cuzmar</div>
+        <div class="sig-role">EL PRESTADOR</div>
+        <div class="sig-role" id="sig-prestador-rut">RUT: 20.722.379-4</div>
+      </div>
+      <div class="sig-block">
+        <div style="height:48px"></div>
+        <div class="sig-line"></div>
+        <div class="sig-name" id="sig-cliente">—</div>
+        <div class="sig-role">EL CLIENTE</div>
+        <div class="sig-role" id="sig-cliente-empresa">—</div>
+      </div>
+    </div>
+
+    <div class="doc-footer" id="doc-footer">
+      Contrato generado el <span id="footer-fecha"></span> · <span id="footer-prestador"></span> · pjmarambioc@gmail.com
+    </div>
+
+  </div><!-- /contract -->
+</main>
+
+<script>
+// ── helpers ──────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const val = id => $(id)?.value?.trim() || '';
+const ph = txt => `<span class="ph">[${txt}]</span>`;
+
+function fmt(n) {
+  if (!n) return null;
+  return Number(n).toLocaleString('es-CL');
+}
+
+// ── render ───────────────────────────────────────────────
+function render() {
+  const dia      = val('f-dia');
+  const mes      = val('f-mes');
+  const pNombre  = val('p-nombre');
+  const pRut     = val('p-rut');
+  const pCiudad  = val('p-ciudad');
+  const pDir     = val('p-dir');
+  const pCorreo  = val('p-correo');
+  const pBanco   = val('p-banco');
+  const pTipo    = val('p-tipo-cuenta');
+  const pCuenta  = val('p-num-cuenta');
+
+  const cNombre  = val('c-nombre');
+  const cRut     = val('c-rut');
+  const cEmpresa = val('c-empresa');
+  const cDir     = val('c-dir');
+
+  const prNombre = val('pr-nombre');
+  const prDesc   = val('pr-desc');
+
+  const precio   = val('e-precio');
+  const cuotas   = val('e-cuotas');
+
+  const horas    = val('s-horas');
+  const garantia = val('s-garantia');
+
+  const jCiudad  = val('j-ciudad');
+  const jFirma   = val('j-firma');
+
+  // subtitulo
+  const fechaTxt = (dia && mes) ? `${dia} de ${mes} de 2026` : ph('fecha');
+  $('doc-subtitulo').innerHTML = `${pCiudad || ph('ciudad')}, ${fechaTxt}`;
+
+  // antecedentes
+  const prestadorStr = `<strong>${pNombre || ph('Nombre Prestador')}</strong>, cédula de identidad N° <strong>${pRut || ph('RUT')}</strong>, domiciliado en ${pDir || ph('dirección')}, ${pCiudad || ph('ciudad')}, correo ${pCorreo || ph('correo')}, en adelante el <strong>"PRESTADOR"</strong>`;
+  const clienteStr = `<strong>${cNombre || ph('Nombre Representante')}</strong>${cRut ? `, RUT N° <strong>${cRut}</strong>` : ''}, representante legal de <strong>${cEmpresa || ph('Nombre Empresa')}</strong>${cDir ? `, domiciliada en ${cDir}` : ''}, en adelante el <strong>"CLIENTE"</strong>`;
+  $('txt-antecedentes').innerHTML = `En ${pCiudad || ph('ciudad')}, a ${fechaTxt}, entre ${prestadorStr}; y por la otra parte ${clienteStr}; se ha acordado el siguiente contrato de prestación de servicios:`;
+
+  // objeto
+  $('txt-objeto').innerHTML = `El PRESTADOR se obliga a prestar servicios de <strong>"Presencia Digital como Servicio"</strong> para <strong>${cEmpresa || ph('Nombre Empresa')}</strong>. El proyecto a desarrollar es: <strong>${prNombre || ph('nombre del proyecto')}</strong>.<br><br>${prDesc ? `<em>${prDesc}</em>` : ph('descripción del servicio')}`;
+
+  // económico
+  const precioFmt = precio ? `<strong>$${fmt(precio)} (${numALetras(Number(precio))} pesos)</strong>` : ph('precio total');
+  const cuotasFmt = cuotas ? Number(cuotas) : null;
+  const valorCuota = (precio && cuotas) ? Math.round(Number(precio) / Number(cuotas)) : null;
+
+  $('txt-economico').innerHTML = `Las partes acuerdan un valor total por el servicio de ${precioFmt} líquidos.`;
+  $('txt-pago-highlight').innerHTML = cuotasFmt
+    ? `Modalidad de pago: <strong>${cuotasFmt} cuotas mensuales</strong> de <strong>$${fmt(valorCuota)} aprox.</strong> cada una, pagaderas los primeros 5 días hábiles de cada mes.`
+    : ph('definir cuotas y monto por cuota');
+
+  $('txt-banco').innerHTML = `Datos de transferencia: Banco <strong>${pBanco || ph('banco')}</strong>, <strong>${pTipo || ph('tipo cuenta')}</strong> N° <strong>${pCuenta || ph('número cuenta')}</strong>, a nombre de ${pNombre || ph('Nombre Prestador')}.`;
+
+  // soporte
+  $('txt-soporte').innerHTML = `El contrato cubre un soporte digital mensual de <strong>${horas || ph('X')} horas hábiles</strong> para cambios menores, sin costo adicional durante la vigencia del contrato.`;
+
+  // garantía
+  $('txt-garantia').innerHTML = `El PRESTADOR ofrece una garantía técnica de <strong>${garantia || ph('X')} meses</strong> contados desde la entrega formal del sitio web ante fallas de código.`;
+
+  // jurisdicción
+  $('txt-jurisdiccion').innerHTML = `Para todos los efectos legales, las partes fijan su domicilio en la ciudad de <strong>${jCiudad || ph('ciudad')}</strong> y se someten a la jurisdicción de sus Tribunales Ordinarios de Justicia.`;
+
+  // firma
+  $('txt-firma').innerHTML = jFirma
+    ? `Las partes acuerdan que el presente instrumento será suscrito mediante firma electrónica avanzada a través de <strong>${jFirma}</strong>, reconociendo ambas su plena validez legal conforme a la Ley N° 19.799 sobre documentos electrónicos y firma electrónica.`
+    : `Las partes acuerdan que el presente instrumento será suscrito mediante firma electrónica avanzada, reconociendo ambas su plena validez legal conforme a la Ley N° 19.799 sobre documentos electrónicos y firma electrónica. ${ph('especificar plataforma')}`;
+
+  // firmas
+  $('sig-prestador').textContent = pNombre || '—';
+  $('sig-prestador-rut').textContent = `RUT: ${pRut || '—'}`;
+  $('sig-cliente').textContent = cNombre || '—';
+  $('sig-cliente-empresa').textContent = cEmpresa || '—';
+
+  // footer
+  const today = new Date();
+  $('footer-fecha').textContent = today.toLocaleDateString('es-CL', { day:'numeric', month:'long', year:'numeric' });
+  $('footer-prestador').textContent = pNombre;
+}
+
+// ── número a letras (simplificado, sólo hasta millones) ──
+function numALetras(n) {
+  if (!n || isNaN(n)) return '';
+  const unidades = ['','un','dos','tres','cuatro','cinco','seis','siete','ocho','nueve',
+    'diez','once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve'];
+  const decenas = ['','diez','veinte','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
+  const centenas = ['','cien','doscientos','trescientos','cuatrocientos','quinientos',
+    'seiscientos','setecientos','ochocientos','novecientos'];
+
+  function grupo(num) {
+    let c = Math.floor(num/100), d = Math.floor((num%100)/10), u = num%10;
+    let r = '';
+    if (c === 1 && (d > 0 || u > 0)) r = 'ciento';
+    else if (c > 0) r = centenas[c];
+    const du = d*10+u;
+    if (du < 20) r += (r ? ' ' : '') + unidades[du];
+    else {
+      r += (r ? ' ' : '') + decenas[d];
+      if (u > 0) r += ' y ' + unidades[u];
+    }
+    return r.trim();
+  }
+
+  if (n === 0) return 'cero';
+  let r = '';
+  const millones = Math.floor(n/1000000);
+  const miles = Math.floor((n%1000000)/1000);
+  const resto = n%1000;
+
+  if (millones > 0) r += grupo(millones) + (millones === 1 ? ' millón' : ' millones');
+  if (miles > 0) r += (r ? ' ' : '') + (miles === 1 ? 'mil' : grupo(miles) + ' mil');
+  if (resto > 0) r += (r ? ' ' : '') + grupo(resto);
+  return r.trim();
+}
+
+// ── reset solo datos del cliente ──────────────────────────
+function resetForm() {
+  ['c-nombre','c-rut','c-empresa','c-dir','pr-nombre','pr-desc',
+   'e-precio','e-cuotas','s-horas','s-garantia','j-firma',
+   'f-dia','f-mes'].forEach(id => {
+    const el = $(id);
+    if (el) el.tagName === 'SELECT' ? el.selectedIndex = 0 : el.value = '';
+  });
+  render();
+}
+
+// ── exportar PDF ──────────────────────────────────────────
+function exportPDF() {
+  const empresa = val('c-empresa') || 'cliente';
+  const fecha   = val('f-dia') && val('f-mes')
+    ? `${val('f-dia')}-${val('f-mes')}-2026`
+    : new Date().toLocaleDateString('es-CL').replace(/\//g,'-');
+
+  const filename = `Contrato_${empresa.replace(/\s+/g,'_')}_${fecha}.pdf`;
+  const el = $('contract');
+
+  html2pdf().set({
+    margin: [14, 14, 14, 14],
+    filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+  }).from(el).save();
+}
+
+// ── listeners ─────────────────────────────────────────────
+document.querySelectorAll('input, textarea, select').forEach(el => {
+  el.addEventListener('input', render);
+  el.addEventListener('change', render);
+});
+
+// render inicial
+render();
+</script>
+</body>
+</html>
